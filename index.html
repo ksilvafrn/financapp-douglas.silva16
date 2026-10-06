@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f7f2">
+    <meta name="description" content="Controle financeiro pessoal: receitas, despesas e tags.">
+    <title>FinancApp — seu dinheiro em equilíbrio</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #1e3027;
+        background: #f4f7f2;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        --green: #26714d;
+        --green-dark: #1d5d3e;
+        --green-soft: #e8f2e9;
+        --ink-muted: #758279;
+        --line: #e6ebe4;
+        --surface: #fff;
+        --shadow: 0 18px 48px rgb(35 61 43 / 7%);
+      }
+
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body { min-width: 320px; min-height: 100vh; margin: 0; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+
+      .site-header {
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 max(1.5rem, calc((100% - 1120px) / 2));
+        background: rgb(255 255 255 / 88%);
+        border-bottom: 1px solid #e9eee8;
+      }
+      .brand { display: inline-flex; align-items: center; gap: 0.75rem; color: #213a2c; text-decoration: none; }
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 13px;
+        background: var(--green);
+        color: #fff;
+      }
+      .brand-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.04em; }
+      .brand-name span { color: var(--green); }
+      .button {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        padding: 0.7rem 1rem;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: var(--green);
+        color: #fff;
+        font-size: 0.92rem;
+        font-weight: 700;
+        transition: background 140ms ease, transform 140ms ease;
+      }
+      .button:hover { transform: translateY(-1px); background: var(--green-dark); }
+      .button-secondary { border-color: var(--line); background: #fff; color: #34463a; }
+      .button-secondary:hover { background: #f7f9f6; }
+
+      main { width: min(1120px, calc(100% - 3rem)); margin: 3rem auto; }
+      .auth-layout {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
+        overflow: hidden;
+        border: 1px solid #e4ebe3;
+        border-radius: 28px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .welcome-panel {
+        position: relative;
+        display: flex;
+        min-height: 620px;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        padding: 3rem;
+        background: #214c37;
+        color: white;
+      }
+      .welcome-panel::after {
+        position: absolute;
+        right: -115px;
+        bottom: -180px;
+        width: 400px;
+        height: 400px;
+        border: 1px solid rgb(255 255 255 / 13%);
+        border-radius: 50%;
+        box-shadow: 0 0 0 42px rgb(255 255 255 / 4%), 0 0 0 84px rgb(255 255 255 / 4%);
+        content: "";
+      }
+      .welcome-kicker { color: #bbd8c2; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+      .welcome-panel h1 { max-width: 390px; margin: 1.25rem 0 1rem; font-size: clamp(2.5rem, 5vw, 4rem); letter-spacing: -0.07em; line-height: 1.03; }
+      .welcome-panel p { max-width: 370px; color: #d3e3d6; line-height: 1.7; }
+      .welcome-note { position: relative; z-index: 1; display: flex; align-items: center; gap: 0.8rem; color: #d3e3d6; font-size: 0.9rem; }
+      .welcome-note-icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid rgb(255 255 255 / 22%); border-radius: 12px; }
+
+      .auth-content { padding: 2.75rem clamp(1.5rem, 4vw, 3.5rem); }
+      .auth-heading { margin: 0 0 0.5rem; font-size: 1.65rem; letter-spacing: -0.045em; }
+      .auth-intro { margin: 0 0 2rem; color: var(--ink-muted); line-height: 1.6; }
+      .auth-grid { display: grid; gap: 1.5rem; }
+      .auth-switch { margin: 1.2rem 0 0; color: var(--ink-muted); font-size: 0.9rem; text-align: center; }
+      .auth-switch button { padding: 0; border: 0; background: transparent; color: var(--green); font-weight: 750; }
+      .auth-switch button:hover { color: var(--green-dark); text-decoration: underline; }
+      .auth-form { padding: 1.4rem; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+      .auth-form h2 { margin: 0 0 1.15rem; font-size: 1.04rem; letter-spacing: -0.02em; }
+      .field { display: block; margin-bottom: 1rem; color: #34463a; font-size: 0.83rem; font-weight: 700; }
+      .field input, .field select {
+        width: 100%;
+        min-height: 46px;
+        margin-top: 0.45rem;
+        padding: 0.7rem 0.8rem;
+        border: 1px solid #dfe6de;
+        border-radius: 10px;
+        outline: none;
+        background: #fcfdfb;
+        color: #1e3027;
+        font-size: 0.94rem;
+        transition: border 140ms ease, box-shadow 140ms ease;
+      }
+      .field input:focus, .field select:focus { border-color: #66a47d; box-shadow: 0 0 0 3px rgb(38 113 77 / 12%); }
+      .auth-form .button { width: 100%; }
+      .form-message { min-height: 1.25rem; margin: 0.7rem 0 0; color: #a13e35; font-size: 0.84rem; }
+
+      .dashboard { display: grid; gap: 1.5rem; }
+      .dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+      .dashboard-heading h1 { margin: 0 0 0.3rem; font-size: clamp(1.7rem, 4vw, 2.25rem); letter-spacing: -0.06em; }
+      .dashboard-heading p { margin: 0; color: var(--ink-muted); }
+      .monthly-report { padding: 1.35rem 1.5rem; border: 1px solid #e5ebe4; border-radius: 20px; background: var(--surface); box-shadow: 0 8px 28px rgb(35 61 43 / 4%); }
+      .monthly-report-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.15rem; }
+      .monthly-report-header h2 { margin: 0 0 0.25rem; font-size: 1.1rem; letter-spacing: -0.035em; }
+      .monthly-report-header p { margin: 0; color: var(--ink-muted); font-size: 0.85rem; }
+      .month-field { width: 180px; min-height: 42px; padding: 0.55rem 0.7rem; border: 1px solid #dfe6de; border-radius: 10px; background: #fcfdfb; color: #34463a; font: inherit; }
+      .monthly-report-controls { display: flex; align-items: end; gap: 0.75rem; }
+      .monthly-report-controls .field { margin: 0; }
+      .monthly-report-controls .button { min-height: 42px; }
+      .monthly-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
+      .monthly-total { width: 100%; min-width: 0; padding: 1rem; border: 1px solid var(--line); border-radius: 14px; background: #fbfcfa; color: inherit; text-align: left; }
+      button.monthly-total { cursor: pointer; transition: border-color 140ms ease, transform 140ms ease; }
+      button.monthly-total:hover { transform: translateY(-1px); border-color: #a9c8ad; }
+      button.monthly-total:focus-visible { outline: 3px solid rgb(38 113 77 / 25%); outline-offset: 2px; }
+      .monthly-total-label { display: block; margin-bottom: 0.5rem; color: var(--ink-muted); font-size: 0.8rem; font-weight: 650; }
+      .monthly-total-value { display: block; overflow-wrap: anywhere; font-size: clamp(1.05rem, 2vw, 1.35rem); font-weight: 800; letter-spacing: -0.04em; }
+      .monthly-income { color: #26714d; }
+      .monthly-expenses { color: #b34b43; }
+      .report-empty { margin: 1rem 0 0; color: var(--ink-muted); font-size: 0.88rem; }
+      .report-detail-list { max-height: min(55vh, 520px); overflow-y: auto; }
+      .report-detail-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 1rem; padding: 0.9rem 0; border-bottom: 1px solid #edf0ec; }
+      .report-detail-row:last-child { border-bottom: 0; }
+      .report-detail-description { overflow: hidden; font-weight: 700; text-overflow: ellipsis; }
+      .report-detail-date { color: var(--ink-muted); font-size: 0.8rem; }
+      .report-detail-value { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-weight: 750; white-space: nowrap; }
+      .report-detail-row.receita .report-detail-value { color: #26714d; }
+      .report-detail-row.despesa .report-detail-value { color: #b34b43; }
+      .report-detail-tags { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+      .investment-card { padding: 1.4rem 1.5rem; border: 1px solid #dce9dc; border-radius: 20px; background: linear-gradient(120deg, #f0f7ef, #fff 72%); box-shadow: 0 8px 28px rgb(35 61 43 / 4%); }
+      .investment-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+      .investment-title { display: flex; align-items: center; gap: 0.75rem; }
+      .investment-title h2 { margin: 0 0 0.25rem; font-size: 1.1rem; letter-spacing: -0.035em; }
+      .investment-title p { margin: 0; color: var(--ink-muted); font-size: 0.85rem; }
+      .investment-icon { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 14px; background: #dceedd; color: var(--green); }
+      .investment-balance { margin: 1rem 0; padding: 1.2rem; border-radius: 16px; background: #214c37; color: #fff; }
+      .investment-balance-label { display: block; margin-bottom: 0.35rem; color: #c7ddcc; font-size: 0.83rem; }
+      .investment-balance-value { font-size: clamp(1.65rem, 4vw, 2.1rem); font-weight: 800; letter-spacing: -0.05em; }
+      .investment-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+      .investment-stat { padding: 0.85rem; border: 1px solid var(--line); border-radius: 12px; background: rgb(255 255 255 / 78%); }
+      .investment-stat span { display: block; color: var(--ink-muted); font-size: 0.78rem; }
+      .investment-stat strong { display: block; margin-top: 0.25rem; font-size: 1rem; }
+      .investment-balance .investment-updated { margin: 0.45rem 0 0; color: #c7ddcc; font-size: 0.76rem; }
+      .investment-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 0.65rem; margin-top: 1rem; }
+      .investment-controls .field { margin: 0; }
+      .investment-controls .button { min-height: 46px; white-space: nowrap; }
+      .investment-available { margin: 0.85rem 0 0; color: var(--green-dark); font-size: 0.86rem; font-weight: 700; }
+      .rate-control { max-width: 190px; margin: 0.9rem 0 0 auto; }
+      .investment-disclaimer { margin: 0.85rem 0 0; color: var(--ink-muted); font-size: 0.77rem; line-height: 1.55; }
+      .investment-updated { margin: 0.45rem 0 0; color: var(--ink-muted); font-size: 0.76rem; }
+      .dashboard-grid { display: grid; grid-template-columns: minmax(275px, 0.78fr) minmax(0, 1.22fr); align-items: start; gap: 1.25rem; }
+      .panel { padding: 1.5rem; border: 1px solid #e5ebe4; border-radius: 20px; background: var(--surface); box-shadow: 0 8px 28px rgb(35 61 43 / 4%); }
+      .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+      .panel-heading h2 { margin: 0; font-size: 1.15rem; letter-spacing: -0.035em; }
+      .panel-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 12px; background: var(--green-soft); color: var(--green); }
+      .profile-line { display: flex; align-items: center; gap: 0.9rem; }
+      #perfilFoto { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+      .profile-placeholder { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 50%; background: var(--green-soft); color: var(--green); font-weight: 800; }
+      #perfilFoto:not([hidden]) + .profile-placeholder { display: none; }
+      .profile-name { margin: 0; font-size: 1rem; font-weight: 750; }
+      .profile-meta { margin: 0.2rem 0 0; color: var(--ink-muted); font-size: 0.87rem; }
+      .balance-card { margin: 1rem 0 1.25rem; padding: 1.25rem; border-radius: 16px; background: #214c37; color: white; }
+      .balance-label { display: block; margin-bottom: 0.5rem; color: #c7ddcc; font-size: 0.85rem; }
+      .saldo { font-size: clamp(1.6rem, 4vw, 2rem); font-weight: 800; letter-spacing: -0.05em; }
+      .balance-card .positivo, .balance-card .negativo { color: white; }
+      .extrato-heading { margin-bottom: 0.4rem; }
+      .extrato-caption { margin: 0; color: var(--ink-muted); font-size: 0.88rem; }
+      .empty-state { display: grid; min-height: 185px; place-items: center; padding: 1.5rem; color: var(--ink-muted); text-align: center; }
+      .empty-state p { max-width: 230px; margin: 0.7rem auto 0; line-height: 1.55; }
+      .lancamento-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 0.8rem; padding: 1rem 0; border-bottom: 1px solid #edf0ec; }
+      .lancamento-card:last-child { border-bottom: 0; }
+      .lancamento-desc { overflow: hidden; margin: 0; font-size: 0.94rem; font-weight: 700; text-overflow: ellipsis; }
+      .lancamento-data { color: var(--ink-muted); font-size: 0.8rem; }
+      .lancamento-valor { grid-column: 2; grid-row: 1; align-self: center; font-size: 0.9rem; font-weight: 750; white-space: nowrap; }
+      .receita .lancamento-valor { color: #26714d; }
+      .despesa .lancamento-valor { color: #b34b43; }
+      .lancamento-tags { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.35rem; padding-top: 0.25rem; }
+      .lancamento-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.4rem; }
+      .lancamento-protected-note { grid-column: 1 / -1; color: var(--ink-muted); font-size: 0.76rem; text-align: right; }
+      .action-button { padding: 0.35rem 0.65rem; border: 1px solid var(--line); border-radius: 8px; background: white; color: #43574a; font-size: 0.78rem; font-weight: 700; }
+      .action-button:hover { background: #f5f8f4; }
+      .action-button-delete { border-color: #f1dfdd; color: #a13e35; }
+      .action-button-delete:hover { background: #fff6f5; }
+      .tag-badge { padding: 0.25rem 0.6rem; border-radius: 999px; background: #edf5ee; color: #36734e; font-size: 0.73rem; font-weight: 650; }
+      .optional-note { color: var(--ink-muted); font-weight: 400; }
+      .full-width { width: 100%; }
+      .dialog-backdrop { border: 0; border-radius: 22px; padding: 0; width: min(460px, calc(100% - 2rem)); box-shadow: 0 24px 80px rgb(20 40 28 / 25%); }
+      .dialog-backdrop::backdrop { background: rgb(20 36 26 / 48%); backdrop-filter: blur(3px); }
+      .dialog-content { padding: 1.5rem; }
+      .dialog-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+      .dialog-heading h2 { margin: 0 0 0.3rem; font-size: 1.25rem; letter-spacing: -0.04em; }
+      .dialog-heading p { margin: 0; color: var(--ink-muted); font-size: 0.88rem; }
+      .dialog-close { border: 0; padding: 0.3rem; background: transparent; color: var(--ink-muted); font-size: 1.4rem; line-height: 1; cursor: pointer; }
+      .dialog-actions { display: flex; justify-content: flex-end; gap: 0.65rem; }
+      .dialog-actions .button { min-width: 110px; }
+      .dialog-error { min-height: 1.25rem; margin: 0 0 0.75rem; color: #a13e35; font-size: 0.84rem; }
+
+      @media (max-width: 780px) {
+        main { width: min(620px, calc(100% - 2rem)); margin: 1.5rem auto; }
+        .auth-layout { grid-template-columns: 1fr; }
+        .welcome-panel { min-height: 280px; padding: 2rem; }
+        .welcome-panel h1 { max-width: 460px; font-size: 2.7rem; }
+        .welcome-note { margin-top: 1.5rem; }
+        .auth-content { padding: 2rem; }
+        .dashboard-grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 480px) {
+        .site-header { height: 66px; padding: 0 1rem; }
+        main { width: calc(100% - 1.25rem); margin: 1rem auto; }
+        .welcome-panel { min-height: 250px; padding: 1.5rem; }
+        .welcome-panel h1 { font-size: 2.3rem; }
+        .auth-content { padding: 1.25rem; }
+        .auth-form, .panel { padding: 1.1rem; }
+        .dashboard-heading { align-items: flex-start; }
+        .monthly-report { padding: 1.1rem; }
+        .monthly-report-header { align-items: flex-start; flex-direction: column; }
+        .month-field { width: 100%; }
+        .monthly-report-controls { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+        .monthly-totals { grid-template-columns: 1fr; }
+        .investment-card { padding: 1.1rem; }
+        .investment-heading { flex-direction: column; }
+        .investment-stats { grid-template-columns: 1fr; }
+        .investment-controls { grid-template-columns: 1fr; }
+        .investment-controls .button { width: 100%; }
+        .rate-control { max-width: none; }
+        .button { min-height: 42px; padding-inline: 0.8rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="FinancApp início">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M4 17.5 9.1 12l3.6 3.5L20 7.5M14.5 7.5H20v5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="brand-name">financ<span>app</span></span>
+      </a>
+      <button id="btnSair" class="button button-secondary" type="button" hidden>Sair</button>
+    </header>
+
+    <main>
+      <section id="telaAuth" class="auth-layout">
+        <div class="welcome-panel">
+          <div>
+            <span class="welcome-kicker">Sua vida financeira</span>
+            <h1>Mais clareza. Mais tranquilidade.</h1>
+            <p>Organize suas receitas e despesas em um só lugar e acompanhe seu dinheiro com mais confiança.</p>
+          </div>
+          <div class="welcome-note">
+            <span class="welcome-note-icon" aria-hidden="true">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3v18m6-13.5c0-1.7-1.8-3-4-3h-4c-2.2 0-4 1.3-4 3s1.8 3 4 3h4c2.2 0 4 1.3 4 3s-1.8 3-4 3h-4c-2.2 0-4-1.3-4-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </span>
+            Um passo de cada vez, no seu ritmo.
+          </div>
+        </div>
+
+        <div class="auth-content">
+          <div id="loginView">
+            <h2 class="auth-heading">Boas-vindas</h2>
+            <p class="auth-intro">Acesse sua conta para acompanhar sua vida financeira.</p>
+            <form id="formLogin" class="auth-form">
+              <h2>Acessar conta</h2>
+              <label class="field" for="loginUsuario">Usuário
+                <input id="loginUsuario" name="usuario" autocomplete="username" placeholder="Seu usuário" required>
+              </label>
+              <label class="field" for="loginSenha">Senha
+                <input id="loginSenha" name="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+              </label>
+              <button class="button" type="submit">Entrar na minha conta</button>
+              <p class="form-message" id="loginMsg" role="status"></p>
+            </form>
+            <p class="auth-switch">Ainda não tem cadastro? <button id="mostrarCadastro" type="button">Criar uma conta</button></p>
+          </div>
+
+          <div id="cadastroView" hidden>
+            <h2 class="auth-heading">Crie sua conta</h2>
+            <p class="auth-intro">Preencha seus dados para começar a organizar suas finanças.</p>
+            <div class="auth-grid">
+              <form id="formCadastro" class="auth-form">
+              <h2>Criar uma conta</h2>
+              <label class="field" for="cadNome">Nome
+                <input id="cadNome" name="nome" autocomplete="name" placeholder="Como podemos chamar você?" required>
+              </label>
+              <label class="field" for="cadTurma">Turma
+                <input id="cadTurma" name="turma" placeholder="Ex.: 2º ano A" required>
+              </label>
+              <label class="field" for="cadUsuario">Usuário
+                <input id="cadUsuario" name="usuario" autocomplete="username" placeholder="Escolha um usuário" required>
+              </label>
+              <label class="field" for="cadSenha">Senha
+                <input id="cadSenha" name="senha" type="password" autocomplete="new-password" placeholder="Crie uma senha" required>
+              </label>
+              <button class="button" type="submit">Criar minha conta</button>
+              <p class="form-message" id="cadMsg" role="status"></p>
+              </form>
+            </div>
+            <p class="auth-switch"><button id="voltarLogin" type="button">Voltar para entrar</button></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="telaApp" class="dashboard" hidden>
+        <div class="dashboard-heading">
+          <div>
+            <h1>Seu painel financeiro</h1>
+            <p>Acompanhe seu dinheiro de um jeito simples.</p>
+          </div>
+        </div>
+
+        <section class="investment-card" aria-labelledby="caixinhaTitulo">
+          <div class="investment-heading">
+            <div class="investment-title">
+              <span class="investment-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 9.5h14v9H5zM8 9.5V7a4 4 0 0 1 8 0v2.5M8 14h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <div>
+                <h2 id="caixinhaTitulo">Minha caixinha</h2>
+                <p>Simule aportes e rendimentos inspirados em um CDB.</p>
+              </div>
+            </div>
+          </div>
+          <div class="investment-balance">
+            <span class="investment-balance-label">Projeção após <span id="caixinhaPrazoLabel">12 meses</span></span>
+            <strong id="caixinhaSaldo" class="investment-balance-value">R$ 0,00</strong>
+            <p id="caixinhaAtualizado" class="investment-updated">Faça um aporte para começar a simulação.</p>
+          </div>
+          <div class="investment-stats">
+            <div class="investment-stat">
+              <span>Total aportado</span>
+              <strong id="caixinhaAportado">R$ 0,00</strong>
+            </div>
+            <div class="investment-stat">
+              <span>Saldo aplicado hoje</span>
+              <strong id="caixinhaSaldoAtual">R$ 0,00</strong>
+            </div>
+            <div class="investment-stat">
+              <span>Rendimento bruto no prazo</span>
+              <strong id="caixinhaRendimento" class="monthly-income">R$ 0,00</strong>
+            </div>
+          </div>
+          <label class="field rate-control" for="caixinhaPrazo">Prazo da simulação
+            <select id="caixinhaPrazo">
+              <option value="3">3 meses</option>
+              <option value="6">6 meses</option>
+              <option value="12" selected>12 meses</option>
+              <option value="24">24 meses</option>
+              <option value="36">36 meses</option>
+            </select>
+          </label>
+          <form id="formCaixinha" class="investment-controls">
+            <label class="field" for="caixinhaOperacao">Operação
+              <select id="caixinhaOperacao" required>
+                <option value="aporte">Guardar dinheiro</option>
+                <option value="resgate">Retirar dinheiro</option>
+              </select>
+            </label>
+            <label class="field" for="caixinhaValor">Valor
+              <input id="caixinhaValor" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00" required>
+            </label>
+            <button id="caixinhaBotao" class="button" type="submit">Investir na caixinha</button>
+          </form>
+          <p id="caixinhaDisponivel" class="investment-available">Saldo disponível para investir: R$ 0,00</p>
+          <label class="field rate-control" for="caixinhaTaxa">Taxa anual simulada (%)
+            <input id="caixinhaTaxa" type="number" min="0" max="100" step="0.1" value="10">
+          </label>
+          <p id="caixinhaMsg" class="form-message" role="status"></p>
+          <p class="investment-disclaimer">Simulação educativa: aportes e resgates atualizam somente o saldo registrado no FinancApp e não transferem dinheiro real. A projeção é bruta e hipotética, sem impostos, taxas ou condições de um CDB real. Isto não é uma oferta de investimento.</p>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>Seu perfil</h2>
+              <span class="panel-icon" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/>
+                  <path d="M5 20c.7-3.2 3.2-5 7-5s6.3 1.8 7 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+            <div class="profile-line">
+              <img id="perfilFoto" alt="Foto do perfil" hidden>
+              <span class="profile-placeholder" aria-hidden="true">F</span>
+              <div>
+                <p class="profile-name">Olá, <span id="perfilNome"></span></p>
+                <p id="perfilTurma" class="profile-meta"></p>
+              </div>
+            </div>
+
+            <div class="balance-card">
+              <span class="balance-label">Saldo atual</span>
+              <span id="saldoValor" class="saldo">R$ 0,00</span>
+            </div>
+
+            <div class="panel-heading">
+              <h2>Novo lançamento</h2>
+              <span class="panel-icon" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+            <form id="formLancamento">
+              <label class="field" for="lancDescricao">Descrição
+                <input id="lancDescricao" name="descricao" maxlength="120" placeholder="Ex.: compra no mercado" required>
+              </label>
+              <label class="field" for="lancValor">Valor
+                <input id="lancValor" name="valor" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00" required>
+              </label>
+              <label class="field" for="lancTipo">Tipo
+                <select id="lancTipo" name="tipo" required>
+                  <option value="despesa">Despesa</option>
+                  <option value="receita">Receita</option>
+                </select>
+              </label>
+              <label class="field" for="lancTags">Tags <span class="optional-note">(opcional)</span>
+                <input id="lancTags" name="tags" placeholder="mercado, casa">
+              </label>
+              <button class="button full-width" type="submit">Salvar lançamento</button>
+              <p class="form-message" id="lancMsg" role="status"></p>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading extrato-heading">
+              <div>
+                <h2>Movimentações</h2>
+                <p class="extrato-caption">Suas receitas e despesas recentes</p>
+              </div>
+              <span class="panel-icon" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 7h14M5 12h14M5 17h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+            <p id="extratoMsg" class="dialog-error" role="status"></p>
+            <div id="extratoContainer" aria-live="polite">
+              <div class="empty-state">
+                <div>
+                  <span class="panel-icon" aria-hidden="true">
+                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 5h14v14H5zM8 9h8M8 13h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <p>Seus lançamentos aparecerão aqui assim que você adicionar o primeiro.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="monthly-report" aria-labelledby="relatorioTitulo">
+          <div class="monthly-report-header">
+            <div>
+              <h2 id="relatorioTitulo">Relatório mensal</h2>
+              <p>Escolha um mês e gere o resumo das suas movimentações.</p>
+            </div>
+            <div class="monthly-report-controls">
+              <label class="field optional-note" for="relatorioMes">Mês
+                <input id="relatorioMes" class="month-field" type="month" aria-label="Selecionar mês do relatório">
+              </label>
+              <button id="gerarRelatorio" class="button" type="button">Gerar relatório</button>
+            </div>
+          </div>
+          <p id="relatorioMensagem" class="report-empty">Selecione um mês e clique em “Gerar relatório”.</p>
+          <div id="relatorioTotais" class="monthly-totals" aria-live="polite" hidden>
+            <button id="relatorioEntradas" class="monthly-total" type="button" disabled>
+              <span class="monthly-total-label">Entradas · clique para ver detalhes</span>
+              <strong class="monthly-total-value monthly-income">R$ 0,00</strong>
+            </button>
+            <button id="relatorioSaidas" class="monthly-total" type="button" disabled>
+              <span class="monthly-total-label">Saídas · clique para ver detalhes</span>
+              <strong class="monthly-total-value monthly-expenses">R$ 0,00</strong>
+            </button>
+            <div class="monthly-total">
+              <span class="monthly-total-label">Resultado do mês</span>
+              <strong id="relatorioResultado" class="monthly-total-value">R$ 0,00</strong>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="editarDialog" class="dialog-backdrop" aria-labelledby="editarTitulo">
+      <form id="formEditarLancamento" class="dialog-content">
+        <div class="dialog-heading">
+          <div>
+            <h2 id="editarTitulo">Editar lançamento</h2>
+            <p>Atualize os dados desta movimentação.</p>
+          </div>
+          <button id="fecharEditar" class="dialog-close" type="button" aria-label="Fechar">×</button>
+        </div>
+        <input id="editarId" type="hidden">
+        <label class="field" for="editarDescricao">Descrição
+          <input id="editarDescricao" maxlength="120" required>
+        </label>
+        <label class="field" for="editarValor">Valor
+          <input id="editarValor" type="number" min="0.01" step="0.01" inputmode="decimal" required>
+        </label>
+        <label class="field" for="editarTipo">Tipo
+          <select id="editarTipo" required>
+            <option value="despesa">Despesa</option>
+            <option value="receita">Receita</option>
+          </select>
+        </label>
+        <p id="editarMsg" class="dialog-error" role="status"></p>
+        <div class="dialog-actions">
+          <button id="cancelarEditar" class="button button-secondary" type="button">Cancelar</button>
+          <button class="button" type="submit">Salvar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="relatorioDetalhes" class="dialog-backdrop" aria-labelledby="relatorioDetalhesTitulo">
+      <div class="dialog-content">
+        <div class="dialog-heading">
+          <div>
+            <h2 id="relatorioDetalhesTitulo">Movimentações do mês</h2>
+            <p id="relatorioDetalhesSubtitulo"></p>
+          </div>
+          <button id="fecharRelatorioDetalhes" class="dialog-close" type="button" aria-label="Fechar">×</button>
+        </div>
+        <div id="relatorioDetalhesLista" class="report-detail-list"></div>
+        <div class="dialog-actions">
+          <button id="fecharRelatorioDetalhesBotao" class="button button-secondary" type="button">Fechar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script src="finacapp.js"></script>
+    <script>
+      const loginView = document.getElementById('loginView');
+      const cadastroView = document.getElementById('cadastroView');
+
+      document.getElementById('mostrarCadastro').addEventListener('click', function () {
+        loginView.hidden = true;
+        cadastroView.hidden = false;
+        document.getElementById('cadNome').focus();
+      });
+
+      document.getElementById('voltarLogin').addEventListener('click', function () {
+        cadastroView.hidden = true;
+        loginView.hidden = false;
+        document.getElementById('loginUsuario').focus();
+      });
+
+      const relatorioMes = document.getElementById('relatorioMes');
+      const hoje = new Date();
+      relatorioMes.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+      relatorioMes.max = relatorioMes.value;
+    </script>
+  </body>
+</html>

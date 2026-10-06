@@ -1,0 +1,9 @@
+{
+"name": "FinancApp",
+"short_name": "FinancApp",
+"description": "Controle financeiro pessoal- receitas, despesas e tags.",
+"start_url": "index.html",
+"display": "standalone",
+"background_color": "#eef6f0",
+"theme_color": "#1f7a4d"
+}
